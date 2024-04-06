@@ -1,0 +1,148 @@
+package com.example.municipalservices;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.bumptech.glide.Glide;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+public class Viewcomplaints extends AppCompatActivity {
+
+    RecyclerView rcvvc;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_viewcomplaints);
+        rcvvc = (RecyclerView) findViewById(R.id.rcvvc);
+
+        final ArrayList aaddid = new ArrayList(), aaduid = new ArrayList(), aadphoto = new ArrayList(), aadloc = new ArrayList(),
+                aadstatuss = new ArrayList(), aadcompliant = new ArrayList();
+            StringRequest stringRequest = new StringRequest(Request.Method.POST, "https://wizzie.online/Publlic_complaint/viewompliants.php",
+                response -> {
+                    try {
+                        JSONArray jsonArray = new JSONArray(response);
+                        if (jsonArray.length() == 0) {
+                            findViewById(R.id.yesData).setVisibility(View.VISIBLE);
+                            rcvvc.setVisibility(View.GONE);
+                            Toast.makeText(getApplicationContext(), "No Requests", Toast.LENGTH_SHORT).show();
+                        } else {
+
+                            try {
+                                for (int i = 0; i < jsonArray.length(); i++) {
+                                    JSONObject jsonObject = jsonArray.getJSONObject(i);
+                                    aaddid.add(jsonObject.getString("id"));
+                                    aaduid.add(jsonObject.getString("userid"));
+                                    aadphoto.add(jsonObject.getString("photo"));
+                                    aadloc.add(jsonObject.getString("location"));
+                                    aadstatuss.add(jsonObject.getString("status"));
+                                    aadcompliant.add(jsonObject.getString("compliant"));
+                                }
+                                findViewById(R.id.yesData).setVisibility(View.GONE);
+                                rcvvc.setVisibility(View.VISIBLE);
+                                vcompadapter vcompadapter = new vcompadapter(getApplicationContext(), aaddid, aaduid, aadphoto, aadloc, aadstatuss, aadcompliant);
+                                rcvvc.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
+                                rcvvc.setAdapter(vcompadapter);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+                }, error -> {
+            findViewById(R.id.yesData).setVisibility(View.GONE);
+            rcvvc.setVisibility(View.VISIBLE);
+            error.printStackTrace();
+        }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> params = new HashMap<String, String>();
+                return params;
+            }
+        };
+        RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
+        requestQueue.add(stringRequest);
+
+
+    }
+}
+
+class vcompholder extends RecyclerView.ViewHolder {
+
+    CardView cvadmin;
+    ImageView ivwpicad;
+    TextView tvpostedby, tvpostedloc;
+
+    public vcompholder(@NonNull View itemView) {
+        super(itemView);
+        ivwpicad = itemView.findViewById(R.id.ivwpicad);
+        tvpostedby = itemView.findViewById(R.id.tvpostedby);
+        tvpostedloc = itemView.findViewById(R.id.tvpostedloc);
+        cvadmin = itemView.findViewById(R.id.cvadmin);
+    }
+}
+
+class vcompadapter extends RecyclerView.Adapter<vcompholder> {
+    Context activity;
+    ArrayList adid, aaduid, adphoto, adlocation, adstatus, adcompliant;
+
+    public vcompadapter(Context applicationContext, ArrayList aaddid, ArrayList aaduid, ArrayList aadphoto, ArrayList aadloc, ArrayList aadstatuss, ArrayList aadcompliant) {
+        this.activity = applicationContext;
+        this.adid = aaddid;
+        this.aaduid = aaduid;
+        this.adphoto = aadphoto;
+        this.adlocation = aadloc;
+        this.adstatus = aadstatuss;
+        this.adcompliant = aadcompliant;
+    }
+
+    @NonNull
+    @Override
+    public vcompholder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        LayoutInflater layoutInflater = LayoutInflater.from(activity);
+        View v = layoutInflater.inflate(R.layout.vradminindl, parent, false);
+        return new vcompholder(v);
+    }
+
+    @SuppressLint("SetTextI18n")
+    @Override
+    public void onBindViewHolder(@NonNull vcompholder holder, int position) {
+        Glide.with(activity).load(adphoto.get(position).toString()).into(holder.ivwpicad);
+        holder.tvpostedby.setText(aaduid.get(position).toString());
+        holder.tvpostedloc.setText( adlocation.get(position).toString());
+    }
+
+    @Override
+    public int getItemCount() {
+        return adid.size();
+    }
+}
