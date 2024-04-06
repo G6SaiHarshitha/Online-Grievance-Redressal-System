@@ -1,0 +1,33 @@
+package com.example.municipalservices;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.Intent;
+import android.os.Bundle;
+
+import java.util.Objects;
+
+public class MainActivity extends AppCompatActivity {
+    private final int SPLASH_DISPLAY_LENGTH = 3000;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        String type=getSharedPreferences("user",MODE_PRIVATE).getString("type","");
+        new android.os.Handler().postDelayed(() -> {
+            MainActivity.this.finish();
+            if(Objects.equals(type, "admin")){
+            Intent intent=new Intent(MainActivity.this,AdminPage.class);
+            startActivity(intent);
+            } else if (Objects.equals(type, "user")) {
+                startActivity(new Intent(this,UserHomePage.class));
+            }else if(Objects.equals(type, "collector")){
+                startActivity(new Intent(this,Gcollector.class));
+            } else {
+                Intent intent = new Intent(MainActivity.this, Login.class);
+                MainActivity.this.startActivity(intent);
+            }
+        }, SPLASH_DISPLAY_LENGTH);
+    }
+}
