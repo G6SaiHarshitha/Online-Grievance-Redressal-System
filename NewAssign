@@ -1,0 +1,114 @@
+package com.example.municipalservices;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.app.ProgressDialog;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+import android.widget.Toast;
+
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+public class NewAssign extends AppCompatActivity {
+    private static final String URLF = "https://wizzie.online/Publlic_complaint/getfreecollectors.php";
+    private static final String URLG = "https://wizzie.online/Publlic_complaint/assignlocation.php";
+    String id;
+    Spinner spinner;
+    ArrayAdapter arrayAdapter;
+    ArrayList<String> name = new ArrayList<>();
+    ArrayList<String> of_id = new ArrayList<>();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_new_assign);
+        spinner = findViewById(R.id.spin);
+        id = getIntent().getStringExtra("id");
+
+        getData();
+    }
+
+    private void getData() {
+        ProgressDialog p=new ProgressDialog(this);
+        p.setCancelable(false);
+        p.setTitle("Fetching details .....");
+        findViewById(R.id.visibleView).setVisibility(View.GONE);
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, URLF,
+                response -> {
+                    try {
+                        JSONArray jsonArray = new JSONArray(response);
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            JSONObject jsonObject = jsonArray.getJSONObject(i);
+                            name.add(jsonObject.getString("name"));
+                            // of_id.add(jsonObject.getString("id"));
+                        }
+                        arrayAdapter = new ArrayAdapter<String>(NewAssign.this, android.R.layout.simple_expandable_list_item_1, name);
+                        spinner.setAdapter(arrayAdapter);
+
+                    } catch (JSONException e) {
+                        Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
+
+                    }
+                    findViewById(R.id.visibleView).setVisibility(View.VISIBLE);
+                p.dismiss();
+                    },
+                error -> {
+                    findViewById(R.id.visibleView).setVisibility(View.VISIBLE);
+            p.dismiss();
+                    Toast.makeText(NewAssign.this, error.toString(), Toast.LENGTH_LONG).show();
+                }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> params = new HashMap<String, String>();
+                return params;
+            }
+        };
+        RequestQueue requestQueue = Volley.newRequestQueue(NewAssign.this);
+        requestQueue.add(stringRequest);
+
+    }
+
+    public void submit(View view) {
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, URLG,
+                response -> {
+                    try {
+                        JSONObject jsonArray = new JSONObject(response);
+                        if (jsonArray.getString("result").equals("success")) {
+                            Toast.makeText(NewAssign.this, "Successfully Assigned", Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+
+                    }
+                },
+                error -> Toast.makeText(NewAssign.this, error.toString(), Toast.LENGTH_LONG).show()) {
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("s", id.trim());
+                params.put("a", spinner.getSelectedItem().toString().trim());
+                return params;
+            }
+        };
+        RequestQueue requestQueue = Volley.newRequestQueue(NewAssign.this);
+        requestQueue.add(stringRequest);
+
+
+    }
+}
