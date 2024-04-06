@@ -1,0 +1,90 @@
+package com.example.municipalservices;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.app.ProgressDialog;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class AddCollector extends AppCompatActivity {
+    EditText id,pass,mob;
+    ProgressDialog p;
+    private static final String URLG="https://wizzie.online/Publlic_complaint/register.php";
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.add_collector);
+        id= findViewById(R.id.cid);
+        p=new ProgressDialog(this);
+        p.setCancelable(false);
+        pass= findViewById(R.id.password);
+        mob= findViewById(R.id.mobile);
+    }
+
+    public void addCall(View view) {
+        String idi=id.getText().toString().trim();
+        String passi=pass.getText().toString().trim();
+        String mobi=mob.getText().toString().trim();
+        if(idi.isEmpty()){
+            Toast.makeText(this, "Please enter the collector id", Toast.LENGTH_SHORT).show();
+        } else if(passi.isEmpty()){
+            Toast.makeText(this, "Please enter the collector Password", Toast.LENGTH_SHORT).show();
+        }else if(mobi.isEmpty()){
+            Toast.makeText(this, "Please enter the collector Mobile number", Toast.LENGTH_SHORT).show();
+        }else{
+            p.show();
+            StringRequest stringRequest = new StringRequest(Request.Method.POST, URLG,
+                    response -> {
+                        try {
+                            JSONObject jsonArray=new JSONObject(response);
+                            String result = jsonArray.getString("result");
+                            if (result.equals("success")){
+                                Toast.makeText(AddCollector.this, "Successfully Added", Toast.LENGTH_SHORT).show();
+                                finish();
+                            }else{
+                                Toast.makeText(this, result, Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                        catch (JSONException e) {
+                            e.printStackTrace();
+
+                        }
+                    p.dismiss();
+                        },
+                    error -> {
+                        Toast.makeText(AddCollector.this, error.toString(), Toast.LENGTH_LONG).show();
+                        p.dismiss();
+                    })
+            {
+                @Override
+                protected Map<String,String> getParams() {
+                    Map<String,String> params = new HashMap<String, String>();
+                    params.put("u",id.getText().toString());
+                    params.put("m",mob.getText().toString());
+                    params.put("p",pass.getText().toString());
+                    params.put("t","collector");
+                    params.put("a","free");
+                    return params;
+                }
+            };
+            RequestQueue requestQueue = Volley.newRequestQueue(AddCollector.this);
+            requestQueue.add(stringRequest);
+        }
+    }
+}
