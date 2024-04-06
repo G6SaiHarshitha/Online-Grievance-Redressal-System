@@ -1,0 +1,95 @@
+package com.example.municipalservices;
+
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.Intent;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
+
+import java.util.ArrayList;
+
+public class ComplaintAdapter extends RecyclerView.Adapter<ComplaintAdapter.ViewHolder> {
+
+    Context context;
+
+    ArrayList desc;
+    ArrayList loc;
+
+    ArrayList aaddid,aaduid,aadphoto,aadloc,
+            aadstatuss,aadcompliant;
+
+    public ComplaintAdapter(Gcollector gcollector, ArrayList aaddid, ArrayList aaduid, ArrayList aadphoto, ArrayList aadloc, ArrayList aadstatuss, ArrayList aadcompliant, ArrayList desc, ArrayList loc) {
+
+        this.context=gcollector;
+        this.desc=desc;
+        this.loc=loc;
+        this.aaddid=aaddid;
+        this.aaduid=aaduid;
+        this.aadphoto=aadphoto;
+        this.aadloc=aadloc;
+        this.aadstatuss=aadstatuss;
+        this.aadcompliant=aadcompliant;
+
+    }
+
+    @NonNull
+    @Override
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        return new ViewHolder(LayoutInflater.from(context).inflate(R.layout.com_items,parent,false));
+    }
+
+    @SuppressLint("SetTextI18n")
+    @Override
+    public void onBindViewHolder(@NonNull ViewHolder holder, @SuppressLint("RecyclerView") final int position) {
+        Glide.with(context).load(aadphoto.get(position).toString()).into(holder.ivwpicad);
+        holder.tvpostedby.setText(aaduid.get(position).toString());
+        holder.tvpostedloc.setText(aadloc.get(position).toString());
+        holder.comp.setText(aadcompliant.get(position).toString());
+        holder.des.setText(desc.get(position).toString());
+
+        holder.cvadmin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent=new Intent(context,Maps.class);
+                intent.putExtra("l",loc.get(position).toString().trim());
+                intent.putExtra("i",aaduid.get(position).toString().trim());
+                context.startActivity(intent);
+
+            }
+        });
+    }
+
+
+
+    @Override
+    public int getItemCount() {
+        return aadcompliant.size() ;
+    }
+
+    public class ViewHolder extends RecyclerView.ViewHolder {
+        CardView cvadmin;
+        ImageView ivwpicad;
+        TextView tvpostedby, tvpostedloc,comp,des;
+        public ViewHolder(@NonNull View itemView) {
+            super(itemView);
+            ivwpicad = (ImageView)itemView.findViewById(R.id.ivwpicad);
+            tvpostedby = (TextView)itemView.findViewById(R.id.tvpostedby);
+            tvpostedloc = (TextView)itemView.findViewById(R.id.tvpostedloc);
+            cvadmin = (CardView)itemView.findViewById(R.id.cvadmin);
+
+            comp = (TextView)itemView.findViewById(R.id.ctype);
+            des = (TextView)itemView.findViewById(R.id.cdes);
+
+
+        }
+    }
+}
