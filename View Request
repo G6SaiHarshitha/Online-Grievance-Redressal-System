@@ -1,0 +1,230 @@
+package com.example.municipalservices;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import android.content.Context;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.bumptech.glide.Glide;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+public class viewrequest extends AppCompatActivity {
+
+    RecyclerView rcvwvr;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_viewrequest);
+        rcvwvr = (RecyclerView)findViewById(R.id.rcvwvr);
+
+
+        final ArrayList<String> iid=new ArrayList<>();
+        final ArrayList<String> compliant=new ArrayList<>();
+        final ArrayList<String> photo=new ArrayList<>();
+        final ArrayList<String> postid=new ArrayList<>();
+        final ArrayList<String> loc=new ArrayList<>();
+        final ArrayList<String> statuss= new ArrayList<>();
+        String id = getSharedPreferences("user", MODE_PRIVATE).getString("id", "");
+
+
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, "https://wizzie.online/Publlic_complaint/viewrqst.php",
+                response -> {
+                    try {
+                        JSONArray jsonArray = new JSONArray(response);
+                        if (jsonArray.length()==0){
+                            Toast.makeText(getApplicationContext(), "Either All your requests are resolved or Currently we do not have your requests", Toast.LENGTH_LONG).show();
+                        }else {
+                            try {
+                                for (int i = 0; i < jsonArray.length(); i++) {
+                                    JSONObject jsonObject = jsonArray.getJSONObject(i);
+                                    iid.add(jsonObject.getString("userid"));
+                                    postid.add(jsonObject.getString("id"));
+                                    compliant.add(jsonObject.getString("compliant"));
+                                    photo.add(jsonObject.getString("photo"));
+                                    loc.add(jsonObject.getString("location"));
+                                    statuss.add(jsonObject.getString("status"));
+                                }
+                                viewrequestadapter viewrequestadapter =new viewrequestadapter(viewrequest.this,iid,postid,compliant,photo,loc,statuss);
+                                rcvwvr.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
+                                rcvwvr.setAdapter(viewrequestadapter);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                error.printStackTrace();
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("a",id);
+                return params;
+            }
+        };
+        RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
+        requestQueue.add(stringRequest);
+
+    }
+}
+
+class viewrequestholder extends RecyclerView.ViewHolder{
+
+    ImageView ivwpic;
+    TextView tvstatus,tvpostdate,tvcomp;
+
+    public viewrequestholder(@NonNull View itemView) {
+        super(itemView);
+        ivwpic = itemView.findViewById(R.id.ivwpic);
+        tvstatus = itemView.findViewById(R.id.tvstatus);
+        tvpostdate = itemView.findViewById(R.id.tvpostdate);
+        tvcomp = itemView.findViewById(R.id.tvcomp);
+    }
+}
+
+class viewrequestadapter extends RecyclerView.Adapter<viewrequestholder>{
+
+    ArrayList<String> id;
+    ArrayList<String> postid;
+    ArrayList<String> compliant;
+    ArrayList<String> photo;
+    ArrayList<String> location;
+    ArrayList<String> status;
+    Context activity;
+
+    public viewrequestadapter(Context applicationContext, ArrayList<String> iid, ArrayList<String> postid, ArrayList<String> compliant, ArrayList<String> photo, ArrayList<String> loc, ArrayList<String> statuss) {
+        this.activity = applicationContext;
+        this.id = iid;
+        this.postid = postid;
+        this.compliant = compliant;
+        this.photo = photo;
+        this.location = loc;
+        this.status = statuss;
+    }
+
+    @NonNull
+    @Override
+    public viewrequestholder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        LayoutInflater layoutInflater = LayoutInflater.from(activity);
+        View v =layoutInflater.inflate(R.layout.vrindl,parent,false);
+        viewrequestholder viewrequestholder =new viewrequestholder(v);
+        return viewrequestholder;
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull viewrequestholder holder, final int position) {
+
+        Glide.with(activity).load(photo.get(position).toString()).into(holder.ivwpic);
+        holder.tvstatus.setText(status.get(position).toString());
+        holder.tvcomp.setText(compliant.get(position).toString());
+
+          /*String[] staatus = status.get(position).toString().split(",");
+          int size = staatus.length;
+          if(size>=0){
+              String stattus = status.get(position).toString().split(",")[0];
+              String date = status.get(position).toString().split(",")[1];
+              holder.tvstatus.setText(stattus);
+              holder.tvpostdate.setText("Posted date: "+date);
+              Glide.with(activity).load(photo.get(position).toString()).into(holder.ivwpic);
+          }
+          else{
+              Glide.with(activity).load(photo.get(position).toString()).into(holder.ivwpic);
+              holder.tvstatus.setText(status.get(position).toString());
+          }*/
+      //  String staatus = status.get(position).toString().split(",")[0];
+       // String date = status.get(position).toString().split(",")[1];
+       // Glide.with(activity).load(photo.get(position).toString()).into(holder.ivwpic);
+        //holder.tvstatus.setText(staatus);
+       // holder.tvpostdate.setText("Posted date: "+date);
+
+        /*holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) {
+
+                final AlertDialog.Builder aalertDialog = new AlertDialog.Builder(activity);
+                aalertDialog.setTitle("Compliant");
+                aalertDialog.setMessage("Do you want to Compliant or remind on this post?");
+                aalertDialog.setPositiveButton("YES",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(final DialogInterface dialog, int which) {
+
+                                StringRequest stringRequest = new StringRequest(Request.Method.POST, "https://wizzie.online/Publlic_complaint/complaintupdate.php",
+                                        new Response.Listener<String>() {
+                                            @Override
+                                            public void onResponse(String response) {
+                                                try {
+                                                    JSONObject jsonArray = new JSONObject(response);
+                                                    notifyDataSetChanged();
+                                                    dialog.dismiss();
+                                                    Toast.makeText(v.getRootView().getContext(), "Compliant has been successfully raised", Toast.LENGTH_LONG).show();
+                                                } catch (JSONException e) {
+                                                    e.printStackTrace();
+                                                }
+                                            }
+                                        }, new Response.ErrorListener() {
+                                    @Override
+                                    public void onErrorResponse(VolleyError error) {
+                                        error.printStackTrace();
+                                    }
+                                }) {
+                                    @Override
+                                    protected Map<String, String> getParams() throws AuthFailureError {
+                                        Map<String, String> params = new HashMap<String, String>();
+                                        params.put("a", postid.get(position).toString());
+                                        return params;
+                                    }
+                                };
+                                RequestQueue requestQueue = Volley.newRequestQueue(v.getRootView().getContext());
+                                requestQueue.add(stringRequest);
+
+                            }
+                        });
+                aalertDialog.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                aalertDialog.show();
+
+
+
+            }
+        });
+
+*/    }
+
+    @Override
+    public int getItemCount() {
+        return id.size();
+    }
+}
