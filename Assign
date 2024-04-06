@@ -1,0 +1,192 @@
+package com.example.municipalservices;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.DialogInterface;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.Spinner;
+import android.widget.Toast;
+
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+public class Assign extends AppCompatActivity {
+    ListView glv;
+    ArrayList arrayList=new ArrayList();
+    ArrayList arrayList1=new ArrayList();
+    ArrayList garrayList=new ArrayList();
+    ArrayAdapter<String> arrayAdapter;
+    private static final String URLAF="https://wizzie.online/Publlic_complaint/getfull.php";
+    private static final String URLG="https://wizzie.online/Publlic_complaint/assignlocation.php";
+    private static final String URLF="https://wizzie.online/Publlic_complaint/getfreecollectors.php";
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_assign);
+        glv=(ListView)findViewById(R.id.glist);
+        getlocations();
+
+    }
+
+    private void getlocations() {
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, URLAF,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            //Toast.makeText(Assign.this, "Toast"+response, Toast.LENGTH_SHORT).show();
+                            JSONArray jsonArray=new JSONArray(response);
+                            for(int i=0;i<jsonArray.length();i++){
+                                JSONObject jsonObject=jsonArray.getJSONObject(i);
+                                arrayList.add(jsonObject.getString("name")+"\n"+jsonObject.getString("location")+"\n*************************************************************");
+                                arrayList1.add(jsonObject.getString("name"));
+                            }
+                            arrayAdapter = new ArrayAdapter<String>(Assign.this,android.R.layout.simple_expandable_list_item_1,arrayList);
+                            glv.setAdapter(arrayAdapter);
+                            arrayAdapter.notifyDataSetChanged();
+
+                            glv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                                @Override
+                                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                                    getfreecollectors(arrayList1.get(position).toString());
+                                }
+                            });
+                        }
+                        catch (JSONException e) {
+                            e.printStackTrace();
+
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(Assign.this, error.toString(), Toast.LENGTH_LONG).show();
+                    }
+                })
+        {
+            @Override
+            protected Map<String,String> getParams() throws AuthFailureError {
+                Map<String,String> params = new HashMap<String, String>();
+                params.put("s","full");
+                params.put("a","free");
+                return params;
+            }
+        };
+        RequestQueue requestQueue = Volley.newRequestQueue(Assign.this);
+        requestQueue.add(stringRequest);
+    }
+
+    private void getfreecollectors(final String s) {
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, URLF,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            JSONArray jsonArray=new JSONArray(response);
+                            for(int i=0;i<jsonArray.length();i++){
+                                JSONObject jsonObject=jsonArray.getJSONObject(i);
+                                garrayList.add(jsonObject.getString("name"));
+                            }
+                            final Spinner lv=new Spinner(Assign.this);
+                            arrayAdapter = new ArrayAdapter<String>(Assign.this,android.R.layout.simple_expandable_list_item_1,garrayList);
+                            lv.setAdapter(arrayAdapter);
+                            arrayAdapter.notifyDataSetChanged();
+                            AlertDialog alertDialog=new AlertDialog.Builder(Assign.this)
+                                    .setTitle("Garbage Collectors List")
+                                    .setMessage("Select One")
+                                    .setView(lv)
+                                    .setPositiveButton("Assign", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            assignlocations(s,lv.getSelectedItem().toString());
+                                        }
+                                    })
+                                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            dialog.cancel();
+                                        }
+                                    })
+                                    .create();
+                            alertDialog.show();
+                        }
+                        catch (JSONException e) {
+                            e.printStackTrace();
+
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(Assign.this, error.toString(), Toast.LENGTH_LONG).show();
+                    }
+                })
+        {
+            @Override
+            protected Map<String,String> getParams() throws AuthFailureError {
+                Map<String,String> params = new HashMap<String, String>();
+                return params;
+            }
+        };
+        RequestQueue requestQueue = Volley.newRequestQueue(Assign.this);
+        requestQueue.add(stringRequest);
+    }
+
+    private void assignlocations(final String l, final String cn) {
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, URLG,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            JSONArray jsonArray=new JSONArray(response);
+                            arrayList.clear();
+                            arrayAdapter = new ArrayAdapter<String>(Assign.this,android.R.layout.simple_expandable_list_item_1,arrayList);
+                            glv.setAdapter(arrayAdapter);
+                            getlocations();
+                        }
+                        catch (JSONException e) {
+                            e.printStackTrace();
+
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(Assign.this, error.toString(), Toast.LENGTH_LONG).show();
+                    }
+                })
+        {
+            @Override
+            protected Map<String,String> getParams() throws AuthFailureError {
+                Map<String,String> params = new HashMap<String, String>();
+                params.put("s",l);
+                params.put("a",cn);
+                return params;
+            }
+        };
+        RequestQueue requestQueue = Volley.newRequestQueue(Assign.this);
+        requestQueue.add(stringRequest);
+    }
+}
