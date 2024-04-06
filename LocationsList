@@ -1,0 +1,144 @@
+package com.example.municipalservices;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.DialogInterface;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.Toast;
+
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+public class LocationsList extends AppCompatActivity {
+    ListView alv;
+    ArrayList<String> arrayList=new ArrayList<>();
+    ArrayList<String> arrayList1=new ArrayList<>();
+    private static final String URLU="https://wizzie.online/Publlic_complaint/changestatus.php";
+    private static final String URLG="https://wizzie.online/Publlic_complaint/getfreelocations.php";
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.locations_list);
+        alv=(ListView)findViewById(R.id.llv);
+        getlist();
+    }
+
+    private void getlist() {
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, URLG,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            JSONArray jsonArray=new JSONArray(response);
+                            for(int i=0;i<jsonArray.length();i++){
+                                JSONObject jsonObject=jsonArray.getJSONObject(i);
+                                arrayList.add(jsonObject.getString("name")+"\n"+jsonObject.getString("location")+"\n*************************************************************");
+                                arrayList1.add(jsonObject.getString("name"));
+                            }
+                            ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(LocationsList.this,android.R.layout.simple_expandable_list_item_1,arrayList);
+                            alv.setAdapter(arrayAdapter);
+                            alv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                                @Override
+                                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                                    final int p=position;
+                                    AlertDialog alertDialog=new AlertDialog.Builder(LocationsList.this)
+                                            .setTitle("Your Response")
+                                            .setMessage("Are You Sure the Bin is Full?")
+                                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    upl(arrayList1.get(p).toString());
+                                                }
+                                            })
+                                            .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    dialog.cancel();
+                                                }
+                                            })
+                                            .create();
+                                    alertDialog.show();
+
+                                }
+                            });
+                        }
+                        catch (JSONException e) {
+                            e.printStackTrace();
+
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(LocationsList.this, error.toString(), Toast.LENGTH_LONG).show();
+                    }
+                })
+        {
+            @Override
+            protected Map<String,String> getParams() throws AuthFailureError {
+                Map<String,String> params = new HashMap<String, String>();
+                return params;
+            }
+        };
+        RequestQueue requestQueue = Volley.newRequestQueue(LocationsList.this);
+        requestQueue.add(stringRequest);
+    }
+
+    private void upl(final String s) {
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, URLU,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            JSONObject jsonArray=new JSONObject(response);
+                            if (jsonArray.getString("result").equals("success")){
+                                Toast.makeText(LocationsList.this, "Successfully Updated", Toast.LENGTH_SHORT).show();
+                                arrayList.clear();
+                                ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(LocationsList.this,android.R.layout.simple_expandable_list_item_1,arrayList);
+                                alv.setAdapter(arrayAdapter);
+                                getlist();
+                            }
+                        }
+                        catch (JSONException e) {
+                            e.printStackTrace();
+
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(LocationsList.this, error.toString(), Toast.LENGTH_LONG).show();
+                    }
+                })
+        {
+            @Override
+            protected Map<String,String> getParams() throws AuthFailureError {
+                Map<String,String> params = new HashMap<String, String>();
+                params.put("s",s);
+                return params;
+            }
+        };
+        RequestQueue requestQueue = Volley.newRequestQueue(LocationsList.this);
+        requestQueue.add(stringRequest);
+    }
+}
